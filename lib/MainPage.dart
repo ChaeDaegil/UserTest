@@ -14,19 +14,19 @@ class MainPage extends StatefulWidget {
 
 class MainPageState extends State<MainPage> {
   List<Map<String, dynamic>> rows = [];
-  String country = "";
-  Database? _database;
+  String country = "US";
+  Database? database;
 
   @override
   void initState() {
     super.initState();
-    _initDatabase();
+    initDatabase();
   }
 
-  Future<void> _initDatabase() async {
+  Future<void> initDatabase() async {
     Directory documentsDirectory = await getApplicationDocumentsDirectory();
     String path = '${documentsDirectory.path}/my_database.db';
-    _database = await openDatabase(path, version: 1, onCreate: (db, version) {
+    database = await openDatabase(path, version: 1, onCreate: (db, version) {
       db.execute('''
         CREATE TABLE users (
           id INTEGER PRIMARY KEY,
@@ -37,15 +37,19 @@ class MainPageState extends State<MainPage> {
         )
       ''');
     });
-    _loadRowsFromDatabase();
+    loadRowsFromDatabase();
   }
 
-  Future<void> _loadRowsFromDatabase() async {
-    if (_database == null) return;
+  Future<void> loadRowsFromDatabase() async {
+    if (database == null) return;
 
-    List<Map<String, dynamic>> queryRows = await _database!.query('users',orderBy: " id ASC ",);
+    List<Map<String, dynamic>> queryRows = await database!.query(
+      'users',
+      orderBy: " id ASC ",
+    );
     setState(() {
       rows = queryRows.map((row) {
+        print(row["country"]);
         return {
           "id": row["id"],
           "country": row["country"],
@@ -57,7 +61,7 @@ class MainPageState extends State<MainPage> {
     });
   }
 
-  void _addRow() {
+  void addRow() {
     setState(() {
       rows.add({
         "country": country,
@@ -68,47 +72,34 @@ class MainPageState extends State<MainPage> {
     });
   }
 
-  Future<void> _saveRowToDatabase(int index) async {
-    if (_database == null) return;
+  Future<void> saveRowToDatabase(int index) async {
+    if (database == null) return;
 
     Map<String, dynamic> row = Map.from(rows[index]);
     row["email_used"] = row["email_used"] ? 1 : 0;
 
     if (row["id"] == null) {
-      int id = await _database!.insert('users', row);
+      int id = await database!.insert('users', row);
       setState(() {
         rows[index]["id"] = id;
       });
-      ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Row ${index + 1} saved to database!')));
+      ScaffoldMessenger.of(context)
+          .showSnackBar( const SnackBar(content: Text('추가 되었습니다.')));
     } else {
-      await _database!.update(
+      await database!.update(
         'users',
         row,
         where: 'id = ?',
         whereArgs: [row["id"]],
       );
-      ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Row ${index + 1} updated in database!')));
+      ScaffoldMessenger.of(context)
+          .showSnackBar( const SnackBar(content: Text('수정되었습니다.')));
     }
   }
-  Future<void> _saveAllToDatabase() async {
-    if (_database == null) return;
 
-    await _database!.transaction((txn) async {
-      for (var row in rows) {
-        Map<String, dynamic> newRow = Map.from(row);
-        newRow["email_used"] = newRow["email_used"] ? 1 : 0;
-        await txn.insert('users', newRow);
-      }
-    });
-    ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text('All rows saved to database!')));
-  }
-
-  void _deleteRow(int id,int index) {
+  void deleteRow(int id, int index) {
     setState(() {
-      _database?.delete("users",where: " id = ? ",whereArgs: [id]);
+      database?.delete("users", where: " id = ? ", whereArgs: [id]);
       rows.removeAt(index);
     });
   }
@@ -122,7 +113,7 @@ class MainPageState extends State<MainPage> {
               children: [
                 Container(
                   alignment: Alignment.center,
-                  child: Text(
+                  child: const Text(
                     "사용자 정보 관리 앱",
                     style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                   ),
@@ -130,7 +121,7 @@ class MainPageState extends State<MainPage> {
                 Container(
                   alignment: Alignment.center,
                   child: ElevatedButton(
-                    onPressed: _addRow,
+                    onPressed: addRow,
                     child: Text("추가"),
                   ),
                 ),
@@ -143,9 +134,10 @@ class MainPageState extends State<MainPage> {
                         DataColumn2(
                           label: Container(
                             alignment: Alignment.center,
-                            child: Text(
+                            child: const Text(
                               '나라',
-                              style: TextStyle(fontSize: 12,fontWeight: FontWeight.bold),
+                              style: TextStyle(
+                                  fontSize: 12, fontWeight: FontWeight.bold),
                             ),
                           ),
                           size: ColumnSize.S,
@@ -153,9 +145,10 @@ class MainPageState extends State<MainPage> {
                         DataColumn2(
                           label: Container(
                             alignment: Alignment.center,
-                            child: Text(
+                            child: const Text(
                               '이름',
-                              style: TextStyle(fontSize: 12,fontWeight: FontWeight.bold),
+                              style: TextStyle(
+                                  fontSize: 12, fontWeight: FontWeight.bold),
                             ),
                           ),
                           size: ColumnSize.S,
@@ -163,19 +156,20 @@ class MainPageState extends State<MainPage> {
                         DataColumn2(
                           label: Container(
                               alignment: Alignment.center,
-                              child: Text(
+                              child: const Text(
                                 '이메일',
-                                style: TextStyle(fontSize: 12,fontWeight: FontWeight.bold),
-                              ))
-                          ,
+                                style: TextStyle(
+                                    fontSize: 12, fontWeight: FontWeight.bold),
+                              )),
                           size: ColumnSize.S,
                         ),
                         DataColumn2(
                           label: Container(
                             alignment: Alignment.center,
-                            child: Text(
+                            child: const Text(
                               '이메일사용',
-                              style: TextStyle(fontSize: 12,fontWeight: FontWeight.bold),
+                              style: TextStyle(
+                                  fontSize: 12, fontWeight: FontWeight.bold),
                             ),
                           ),
                           size: ColumnSize.S,
@@ -183,9 +177,10 @@ class MainPageState extends State<MainPage> {
                         DataColumn2(
                           label: Container(
                             alignment: Alignment.center,
-                            child: Text(
+                            child: const Text(
                               '비고',
-                              style: TextStyle(fontSize: 12,fontWeight: FontWeight.bold),
+                              style: TextStyle(
+                                  fontSize: 12, fontWeight: FontWeight.bold),
                             ),
                           ),
                           size: ColumnSize.S,
@@ -193,52 +188,52 @@ class MainPageState extends State<MainPage> {
                       ],
                       rows: List<DataRow>.generate(
                           rows.length,
-                              (index) => DataRow(cells: [
-                            DataCell(
-                              Container(
-                                padding: EdgeInsets.zero,
-                                margin: EdgeInsets.zero,
-                                alignment: Alignment.center,
-                                child: CountryCodePicker(
-                                  onChanged: (countryCode) {
-                                    setState(() {
-                                      rows[index]["country"] = countryCode.name;
-                                    });
-                                  },
-                                  initialSelection: rows[index]["country"] ?? "US",
-                                  favorite:  ['+1', 'US'],
-                                  showFlag: false,
-                                  alignLeft: false,
-                                  showOnlyCountryWhenClosed: true,
-                                  textStyle: TextStyle(
-                                      fontSize: 12,
-                                      color: Colors.black,
-                                      fontWeight: FontWeight.bold
+                          (index) => DataRow(cells: [
+                                DataCell(
+                                  Container(
+                                    padding: EdgeInsets.zero,
+                                    margin: EdgeInsets.zero,
+                                    alignment: Alignment.center,
+                                    child: CountryCodePicker(
+                                      onChanged: (countryCode) {
+                                        setState(() {
+                                          rows[index]["country"] =
+                                              countryCode.name;
+                                        });
+                                      },
+                                      initialSelection:
+                                          rows[index]["country"] ?? "US",
+                                      favorite: ['+1', 'US'],
+                                      showFlag: false,
+                                      alignLeft: false,
+                                      showOnlyCountryWhenClosed: true,
+                                      textStyle: const TextStyle(
+                                          fontSize: 12,
+                                          color: Colors.black,
+                                          fontWeight: FontWeight.bold),
+                                    ),
                                   ),
                                 ),
-                              ),
-                            ),
-                            DataCell(Container(
-                              alignment: Alignment.centerLeft,
-                              child: TextFormField(
-                                initialValue: rows[index]["username"],
-                                onChanged: (newValue) {
-                                  setState(() {
-                                    rows[index]["username"] = newValue;
-                                  });
-                                },
-                              ),
-                            )),
-                            DataCell(TextFormField(
-                              initialValue: rows[index]["email"],
-                              onChanged: (newValue) {
-                                setState(() {
-                                  rows[index]["email"] = newValue;
-                                });
-                              },
-                            )),
-                            DataCell(
-                                Container(
+                                DataCell(Container(
+                                  alignment: Alignment.centerLeft,
+                                  child: TextFormField(
+                                    initialValue: rows[index]["username"],
+                                    onChanged: (newValue) {
+                                      setState(() {
+                                        rows[index]["username"] = newValue;
+                                      });
+                                    },
+                                  ),
+                                )),
+                                DataCell(TextFormField(
+                                  initialValue: rows[index]["email"],
+                                  onChanged: (newValue) {
+                                    setState(() {
+                                      rows[index]["email"] = newValue;
+                                    });
+                                  },
+                                )),
+                                DataCell(Container(
                                   alignment: Alignment.center,
                                   child: Checkbox(
                                     value: rows[index]["email_used"],
@@ -248,45 +243,46 @@ class MainPageState extends State<MainPage> {
                                       });
                                     },
                                   ),
-                                )
-                            ),
-                            DataCell(
-                                Container(
+                                )),
+                                DataCell(Container(
                                   alignment: Alignment.center,
                                   child: Row(
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
                                       Container(
-                                        width:30,
+                                        width: 30,
                                         height: 30,
                                         alignment: Alignment.center,
                                         child: IconButton(
-                                          icon: Icon(
+                                          icon: const Icon(
                                             size: 15,
                                             Icons.save,
                                           ),
-                                          onPressed: () => _saveRowToDatabase(index),
+                                          onPressed: () =>
+                                              saveRowToDatabase(index),
                                         ),
                                       ),
                                       Container(
-                                        width:30,
+                                        width: 30,
                                         height: 30,
                                         alignment: Alignment.center,
                                         child: IconButton(
-                                          icon: Icon(
-                                              size: 15,
-                                              Icons.delete
-                                          ),
-                                          onPressed: () => _deleteRow( rows[index]["id"],index),
+                                          icon: Icon(size: 15, Icons.delete),
+                                          onPressed: () => deleteRow(
+                                              rows[index]["id"], index),
                                         ),
                                       ),
                                     ],
                                   ),
-                                )
-                            )
-                          ]))),
+                                ))
+                              ]
+                          )
+                      )
+                  ),
                 )
               ],
-            )));
+            )
+        )
+    );
   }
 }
