@@ -40,7 +40,9 @@ dependencies:
   country_code_picker: ^3.0.0
   data_table_2: ^2.5.15
   country_picker: ^2.0.26
-
+  excel: any
+  permission_handler: ^10.0.0
+  provider: ^6.0.3  # provider 패키지 추가
 dev_dependencies:
   flutter_test:
     sdk: flutter
